@@ -15,49 +15,45 @@
 namespace hwinfo {
 
 // _____________________________________________________________________________________________________________________
-std::string OS::getFullName() {
+OS::OS() {
   size_t size = 1024;
-  std::string os_name;
-  os_name.resize(size);
-  if (sysctlbyname("kern.os", (void*)(os_name.data()), &size, nullptr, 0) == 0) {
-    os_name.resize(size);  // trim the string to the actual size
-    return os_name;
-  }
-  return "macOS <unknown version>";
-}
+  _name = "macOS";
 
-// _____________________________________________________________________________________________________________________
-std::string OS::getName() {
-  size_t size = 1024;
-  std::string os_name;
-  os_name.resize(size);
-  if (sysctlbyname("kern.os", (void*)(os_name.data()), &size, nullptr, 0) == 0) {
-    os_name.resize(size);  // trim the string to the actual size
-    return os_name;
+  std::string kernel_name;
+  kernel_name.resize(size);
+  if (sysctlbyname("kern.ostype", kernel_name.data(), &size, nullptr, 0) == 0) {
+    kernel_name.resize(size);  // trim the string to the actual size
+    kernel_name.pop_back();    // remove unprintable character at the end
+    _kernel = kernel_name;
+  } else {
+    _kernel = "<unknown name>";
   }
-  return "macOS";
-}
 
-// _____________________________________________________________________________________________________________________
-std::string OS::getVersion() {
-  size_t size = 1024;
+  std::string kernel_version;
+  kernel_version.resize(size);
+  if (sysctlbyname("kern.osrelease", kernel_version.data(), &size, nullptr, 0) == 0) {
+    kernel_version.resize(size);
+    kernel_version.pop_back();
+
+    _kernel = _kernel + " " + kernel_version;
+  } else {
+    _kernel = _kernel + " <unknown version>";
+  }
+
   std::string os_version;
   os_version.resize(size);
-  if (sysctlbyname("kern.osrelease", (void*)(os_version.data()), &size, nullptr, 0) == 0) {
-    os_version.resize(size);  // trim the string to the actual size
-    return os_version;
+
+  if (sysctlbyname("kern.osproductversion", os_version.data(), &size, nullptr, 0) == 0) {
+    os_version.resize(size);
+    os_version.pop_back();
+    _version = os_version;
+  } else {
+    _version = "<unknown>";
   }
-  return "<unknown version>";
-}
 
-// _____________________________________________________________________________________________________________________
-std::string OS::getKernel() {
-  // TODO: implement
-  return "<unknown>";
+  _64bit = true;
+  _32bit = !_64bit;
 }
-
-// _____________________________________________________________________________________________________________________
-bool OS::getIs64bit() { return true; }
 
 }  // namespace hwinfo
 
